@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: page('Project', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${project.name}">Project</h1>
+            <p class="sub" th:text="${project.description}">Description</p>
+        </div>
+        <div class="actions" sec:authorize="hasRole('LEAD')">
+            <a class="btn btn-quiet" th:href="@{'/projects/' + ${project.id} + '/edit'}">Edit</a>
+            <a class="btn" th:href="@{'/tasks/new?projectId=' + ${project.id}}">Assign a task</a>
+        </div>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:1.25rem">
+        <div class="metric">
+            <span class="metric-label">Average progress</span>
+            <span class="metric-value" th:text="${health.progressPercent} + '%'">0%</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Tasks done</span>
+            <span class="metric-value" th:text="${health.completedTasks} + '/' + ${health.totalTasks}">0/0</span>
+        </div>
+        <div class="metric" th:classappend="${health.overdueTasks > 0} ? 'alert' : ''">
+            <span class="metric-label">Overdue</span>
+            <span class="metric-value" th:text="${health.overdueTasks}">0</span>
+        </div>
+        <div class="metric" th:classappend="${health.riskScore >= 60} ? 'alert' : ''">
+            <span class="metric-label">Risk score</span>
+            <span class="metric-value" th:text="${health.riskScore}">0</span>
+            <span class="metric-note" th:text="${health.riskLevel}">Low</span>
+        </div>
+    </div>
+
+    <div class="grid grid-sidebar">
+        <div>
+            <div class="card">
+                <h2>Tasks</h2>
+                <div class="empty" th:if="${#lists.isEmpty(tasks)}">
+                    <p>No tasks yet. Nothing is being tracked until work is assigned.</p>
+                    <a class="btn" th:href="@{'/tasks/new?projectId=' + ${project.id}}"
+                       sec:authorize="hasRole('LEAD')">Assign the first task</a>
+                </div>
+                <div class="table-wrap" th:unless="${#lists.isEmpty(tasks)}">
+                    <table>
+                        <thead>
+                        <tr><th>Task</th><th>Owner</th><th>Priority</th><th>Deadline</th><th>Progress</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t : ${tasks}">
+                            <td><a th:href="@{'/tasks/' + ${t.id}}" th:text="${t.title}">Task</a></td>
+                            <td class="faint" th:text="${t.assignee != null} ? ${t.assignee.fullName} : 'Unassigned'">Owner</td>
+                            <td><span class="pill"
+                                      th:classappend="${t.priority.name() == 'CRITICAL'} ? 'pill-alert' : (${t.priority.name() == 'HIGH'} ? 'pill-warn' : 'pill-neutral')"
+                                      th:text="${t.priority.label}">Medium</span></td>
+                            <td><time th:text="${t.deadline}">date</time>
+                                <span class="pill pill-alert" th:if="${t.overdue}">overdue</span></td>
+                            <td>
+                                <div class="risk-rail">
+                                    <div class="bar" th:classappend="${t.overdue} ? 'late' : ''">
+                                        <span th:style="'width:' + ${t.progress} + '%'"></span>
+                                    </div>
+                                    <span class="bar-label mono" th:text="${t.progress} + '%'">0%</span>
+                                </div>
+                            </td>
+                            <td class="faint" th:text="${t.status.label}">Status</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="stack">
+            <div class="card">
+                <h3>Risk read-out</h3>
+                <div class="insight"><p th:text="${riskNote}">Note</p></div>
+            </div>
+
+            <div class="card">
+                <h3>Team</h3>
+                <ul class="note-feed">
+                    <li th:each="m : ${project.members}" style="display:flex;justify-content:space-between;gap:.5rem;align-items:center">
+                        <span>
+                            <a th:href="@{'/performance/' + ${m.id}}" th:text="${m.fullName}">Name</a>
+                            <span class="faint" th:text="' · ' + ${m.designation}"></span>
+                        </span>
+                        <form th:action="@{'/projects/' + ${project.id} + '/members/remove'}" method="post"
+                              sec:authorize="hasRole('LEAD')">
+                            <input type="hidden" name="userId" th:value="${m.id}">
+                            <button class="btn btn-quiet btn-small" type="submit">Remove</button>
+                        </form>
+                    </li>
+                </ul>
+                <p class="faint" th:if="${#sets.isEmpty(project.members)}">Nobody assigned yet.</p>
+
+                <div sec:authorize="hasRole('LEAD')" th:if="${!#lists.isEmpty(candidates)}">
+                    <div class="divider"></div>
+                    <form th:action="@{'/projects/' + ${project.id} + '/members/add'}" method="post">
+                        <div class="field">
+                            <label for="userId">Add someone</label>
+                            <select id="userId" name="userId">
+                                <option th:each="c : ${candidates}" th:value="${c.id}" th:text="${c.fullName}">Person</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-quiet btn-small" type="submit">Add to project</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Dates</h3>
+                <p class="faint" style="margin:0">Started <time th:text="${project.startDate}">date</time></p>
+                <p class="faint" style="margin:0">Target <time th:text="${project.targetEndDate}">date</time></p>
+                <p class="faint" style="margin:.4rem 0 0" th:text="'Status: ' + ${project.status.label}">Status</p>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

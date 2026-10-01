@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in · Delivery Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="login-wrap">
+    <div class="login-aside">
+        <h1>Work gets tracked, not chased.</h1>
+        <p style="max-width:44ch">Assign tasks with a deadline, let people update their own progress
+            at the end of the day, and let the system flag what is slipping.</p>
+        <ul>
+            <li>Progress updates are prompted at sign-out, so nobody has to run a status meeting</li>
+            <li>Deadline extensions go through a written request and a written decision</li>
+            <li>Ratings, punctuality and attendance roll into one productivity score</li>
+            <li>A chatbot reviews submitted code before a human ever opens it</li>
+        </ul>
+    </div>
+
+    <div class="login-form">
+        <div class="card">
+            <h1 style="font-size:1.25rem">Sign in</h1>
+            <p class="faint" th:if="${param.signedOut}">You are signed out.</p>
+            <p class="error" th:if="${param.error}">That username and password did not match.</p>
+
+            <form th:action="@{/login}" method="post">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" autofocus required>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button class="btn" type="submit" style="width:100%">Sign in</button>
+            </form>
+
+            <div class="divider"></div>
+            <div class="demo-keys">
+                <p style="margin-bottom:.4rem">Demo accounts created on first run:</p>
+                <p style="margin:0">Lead <code>lead</code> / <code>lead123</code><br>
+                   Employee <code>priya</code> / <code>priya123</code><br>
+                   HR <code>hr</code> / <code>hr123</code></p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

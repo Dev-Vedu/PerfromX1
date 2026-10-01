@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Team scores', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Team scores</h1>
+            <p class="sub">Productivity is calculated from completion, deadline adherence, review ratings and
+                attendance. Open a person to see the detail.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="empty" th:if="${#lists.isEmpty(rows)}"><p>No employees on record.</p></div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(rows)}">
+            <table>
+                <thead>
+                <tr><th>Employee</th><th>Score</th><th>Band</th><th>Completed</th><th>On time</th>
+                    <th>Overdue</th><th>Avg rating</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${rows}" th:with="e=${r[0]}, s=${r[1]}">
+                    <td>
+                        <a th:href="@{'/performance/' + ${e.id}}" th:text="${e.fullName}">Name</a>
+                        <small class="faint" th:text="${e.designation}">designation</small>
+                    </td>
+                    <td>
+                        <div class="risk-rail">
+                            <div class="bar"><span th:style="'width:' + ${s.score} + '%'"></span></div>
+                            <span class="bar-label mono" th:text="${s.score}">0</span>
+                        </div>
+                    </td>
+                    <td><span class="pill"
+                              th:classappend="${s.score >= 75} ? 'pill-good' : (${s.score >= 50} ? 'pill-neutral' : 'pill-warn')"
+                              th:text="${s.band}">band</span></td>
+                    <td class="mono" th:text="${s.completedTasks} + ' / ' + ${s.totalTasks}">0 / 0</td>
+                    <td class="mono" th:text="${#numbers.formatDecimal(s.onTimeRate, 1, 0)} + '%'">0%</td>
+                    <td class="mono" th:text="${s.overdueTasks}">0</td>
+                    <td class="mono" th:text="${s.averageRating > 0 ? #numbers.formatDecimal(s.averageRating, 1, 1) : '—'}">—</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

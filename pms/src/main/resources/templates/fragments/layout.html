@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="page(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · Delivery Console'">Delivery Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="shell">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <span>Delivery Console</span>
+            <small>Projects, people, performance</small>
+        </div>
+
+        <nav class="nav">
+            <a th:href="@{/dashboard}">Dashboard</a>
+            <a th:href="@{/projects}">Projects</a>
+            <a th:href="@{/tasks}" sec:authorize="hasRole('EMPLOYEE')">My tasks</a>
+            <a th:href="@{/tasks/review-queue}" sec:authorize="hasRole('LEAD')">Review queue</a>
+            <a th:href="@{/extensions}">Deadline requests</a>
+            <a th:href="@{/reports}">Reports</a>
+
+            <span class="group">Performance</span>
+            <a th:href="@{/performance}" sec:authorize="hasAnyRole('LEAD','HR')">Team scores</a>
+            <a th:href="@{/performance/me}" sec:authorize="hasRole('EMPLOYEE')">My performance</a>
+            <a th:href="@{/rewards}" sec:authorize="hasAnyRole('LEAD','HR')">Increments and bonuses</a>
+
+            <span class="group">Tools</span>
+            <a th:href="@{/chatbot}">Code review chatbot</a>
+            <a th:href="@{/admin/people}" sec:authorize="hasAnyRole('HR','LEAD')">People</a>
+        </nav>
+
+        <div class="whoami" th:if="${me != null}">
+            <div>
+                <strong th:text="${me.fullName}">Name</strong>
+                <small th:text="${me.role.label} + (${me.designation} != null ? ' · ' + ${me.designation} : '')">Role</small>
+            </div>
+            <form th:action="@{/logout}" method="post" id="signout-form">
+                <button type="submit" data-signout>Sign out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="main">
+        <div class="topbar">
+            <span class="crumb" th:text="${title}">Page</span>
+            <a class="bell" th:href="@{/notifications}">
+                Notifications
+                <span class="count" th:if="${unreadCount != null and unreadCount > 0}"
+                      th:text="${unreadCount}">3</span>
+            </a>
+        </div>
+
+        <div class="content">
+            <div class="flash" th:if="${flash}" th:text="${flash}"></div>
+            <th:block th:replace="${content}"></th:block>
+        </div>
+    </div>
+</div>
+
+<!-- End-of-session progress prompt (stage 5 of the workflow) -->
+<dialog class="wrapup" id="wrapup"
+        th:if="${openTasksForPrompt != null and !openTasksForPrompt.isEmpty()}"
+        th:attr="data-has-tasks=${!openTasksForPrompt.isEmpty()}">
+    <header>
+        <h2>Before you sign out</h2>
+        <p class="faint" style="margin:0">Set where each task stands so your lead does not have to ask.</p>
+    </header>
+    <form th:action="@{/tasks/bulk-progress}" method="post">
+        <div class="body">
+            <div class="wrapup-row" th:each="t : ${openTasksForPrompt}">
+                <span class="t" th:text="${t.title}">Task</span>
+                <input type="hidden" name="taskId" th:value="${t.id}">
+                <input type="number" name="progress" min="0" max="100" step="5"
+                       th:value="${t.progress}" aria-label="Percent complete">
+                <span class="faint">%</span>
+            </div>
+        </div>
+        <footer>
+            <button type="button" class="btn btn-quiet" id="wrapup-skip">Sign out without updating</button>
+            <button type="submit" class="btn">Save and sign out</button>
+        </footer>
+    </form>
+</dialog>
+
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

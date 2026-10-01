@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Dashboard', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>People and delivery</h1>
+            <p class="sub">Scores are computed from delivery, punctuality, ratings and attendance. Every reward is a suggestion.</p>
+        </div>
+        <a class="btn btn-quiet" th:href="@{/admin/people}">Manage accounts</a>
+    </div>
+
+    <div class="card">
+        <h2>Increment and bonus guidance</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>Employee</th><th class="num">Score</th><th>Band</th><th>Increment</th><th>Bonus</th><th>Why</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${rewards}">
+                    <td><a th:href="@{'/performance/' + ${r.employee.id}}" th:text="${r.employee.fullName}">Name</a></td>
+                    <td class="num mono" th:text="${r.score.score}">0</td>
+                    <td><span class="pill pill-neutral" th:text="${r.score.band}">Band</span></td>
+                    <td th:text="${r.recommendation}">—</td>
+                    <td th:text="${r.bonusBand}">—</td>
+                    <td class="faint" th:text="${r.rationale}">—</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Project health</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Project</th><th>Lead</th><th class="num">Progress</th><th>Risk</th></tr></thead>
+                <tbody>
+                <tr th:each="h : ${health}">
+                    <td><a th:href="@{'/projects/' + ${h.project.id}}" th:text="${h.project.name}">Project</a></td>
+                    <td class="faint" th:text="${h.project.lead.fullName}">Lead</td>
+                    <td class="num mono" th:text="${h.progressPercent} + '%'">0%</td>
+                    <td><span class="pill"
+                              th:classappend="${h.riskLevel == 'High'} ? 'pill-alert' : (${h.riskLevel == 'Watch'} ? 'pill-warn' : 'pill-good')"
+                              th:text="${h.riskLevel}">Low</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

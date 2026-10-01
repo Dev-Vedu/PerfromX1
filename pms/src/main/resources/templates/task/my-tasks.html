@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('My tasks', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>My tasks</h1>
+            <p class="sub">Update progress as you go. You will also be asked at sign-out.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="empty" th:if="${#lists.isEmpty(tasks)}">
+            <p>Nothing assigned to you.</p>
+        </div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(tasks)}">
+            <table>
+                <thead>
+                <tr><th>Task</th><th>Project</th><th>Priority</th><th>Deadline</th><th>Progress</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${tasks}">
+                    <td><a th:href="@{'/tasks/' + ${t.id}}" th:text="${t.title}">Task</a></td>
+                    <td class="faint" th:text="${t.project.name}">Project</td>
+                    <td><span class="pill"
+                              th:classappend="${t.priority.name() == 'CRITICAL'} ? 'pill-alert' : (${t.priority.name() == 'HIGH'} ? 'pill-warn' : 'pill-neutral')"
+                              th:text="${t.priority.label}">Medium</span></td>
+                    <td><time th:text="${t.deadline}">date</time>
+                        <span class="pill pill-alert" th:if="${t.overdue}">overdue</span></td>
+                    <td>
+                        <div class="risk-rail">
+                            <div class="bar" th:classappend="${t.overdue} ? 'late' : ''">
+                                <span th:style="'width:' + ${t.progress} + '%'"></span>
+                            </div>
+                            <span class="bar-label mono" th:text="${t.progress} + '%'">0%</span>
+                        </div>
+                    </td>
+                    <td class="faint" th:text="${t.status.label}">Status</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

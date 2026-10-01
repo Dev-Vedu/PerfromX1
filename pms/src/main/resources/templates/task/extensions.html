@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Deadline requests', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${forLead} ? 'Extension requests' : 'My extension requests'">Requests</h1>
+            <p class="sub" th:text="${forLead}
+                ? 'Approving moves the task deadline and records the extension against the owner.'
+                : 'Every request keeps its written reason and the decision your lead gave.'">sub</p>
+        </div>
+    </div>
+
+    <div class="empty" th:if="${#lists.isEmpty(requests)}">
+        <p th:text="${forLead} ? 'No requests waiting on you.' : 'You have not asked for any extensions.'">None</p>
+    </div>
+
+    <div class="stack" th:unless="${#lists.isEmpty(requests)}">
+        <div class="card" th:each="r : ${requests}">
+            <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
+                <div>
+                    <h2 style="margin-bottom:.15rem">
+                        <a th:href="@{'/tasks/' + ${r.task.id}}" th:text="${r.task.title}">Task</a>
+                    </h2>
+                    <p class="faint" style="margin:0"
+                       th:text="${r.requestedBy.fullName} + ' · ' + ${r.task.project.name}">meta</p>
+                </div>
+                <span class="pill"
+                      th:classappend="${r.status.name() == 'APPROVED'} ? 'pill-good' : (${r.status.name() == 'REJECTED'} ? 'pill-alert' : 'pill-warn')"
+                      th:text="${r.status.label}">Pending</span>
+            </div>
+
+            <p style="margin:.75rem 0 .25rem">
+                <span class="faint">Moves the deadline </span>
+                <time th:text="${r.currentDeadline}">from</time>
+                <span class="faint"> to </span>
+                <time th:text="${r.requestedDeadline}">to</time>
+            </p>
+            <div class="card-flat" th:text="${r.reason}">Reason</div>
+
+            <p class="faint" th:if="${r.leadComment}" style="margin-top:.6rem"
+               th:text="'Lead: ' + ${r.leadComment}">comment</p>
+
+            <div th:if="${forLead and r.status.name() == 'PENDING'}" style="margin-top:.9rem">
+                <form th:action="@{'/extensions/' + ${r.id} + '/decide'}" method="post">
+                    <div class="field">
+                        <label th:for="'c' + ${r.id}">Your comment</label>
+                        <input type="text" th:id="'c' + ${r.id}" name="comment"
+                               placeholder="What you want the owner to do differently">
+                    </div>
+                    <div class="actions">
+                        <button class="btn" type="submit" name="approve" value="true">Approve the new date</button>
+                        <button class="btn btn-danger" type="submit" name="approve" value="false">Reject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

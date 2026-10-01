@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Project setup', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${form.id == null} ? 'New project' : 'Edit project'">New project</h1>
+            <p class="sub">Add the people who will receive tasks. They see the project as soon as you save.</p>
+        </div>
+    </div>
+
+    <form th:action="@{/projects}" th:object="${form}" method="post" class="card" style="max-width:720px">
+        <input type="hidden" th:field="*{id}">
+
+        <div class="field">
+            <label for="name">Project name</label>
+            <input type="text" id="name" th:field="*{name}">
+            <p class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+        </div>
+
+        <div class="field">
+            <label for="description">What this project delivers</label>
+            <textarea id="description" th:field="*{description}"></textarea>
+        </div>
+
+        <div class="field-row">
+            <div class="field">
+                <label for="startDate">Start date</label>
+                <input type="date" id="startDate" th:field="*{startDate}">
+            </div>
+            <div class="field">
+                <label for="targetEndDate">Target end date</label>
+                <input type="date" id="targetEndDate" th:field="*{targetEndDate}">
+            </div>
+            <div class="field">
+                <label for="status">Status</label>
+                <select id="status" th:field="*{status}">
+                    <option th:each="s : ${T(com.pms.entity.ProjectStatus).values()}"
+                            th:value="${s}" th:text="${s.label}">Active</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="memberIds">Team members</label>
+            <select id="memberIds" th:field="*{memberIds}" multiple>
+                <option th:each="p : ${people}" th:value="${p.id}"
+                        th:text="${p.fullName} + ' — ' + ${p.designation}">Person</option>
+            </select>
+            <p class="faint" style="margin:.3rem 0 0">Hold Ctrl or Cmd to pick more than one.</p>
+        </div>
+
+        <div class="actions">
+            <button class="btn" type="submit">Save project</button>
+            <a class="btn btn-quiet" th:href="@{/projects}">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

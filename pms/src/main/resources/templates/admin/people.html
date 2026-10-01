@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('People', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>People</h1>
+            <p class="sub">Accounts and roles. Disabling an account blocks sign-in but keeps the work history.</p>
+        </div>
+    </div>
+
+    <div class="grid-sidebar">
+        <div class="card">
+            <h2>Everyone</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    <tr th:each="p : ${people}">
+                        <td>
+                            <a th:href="@{'/performance/' + ${p.id}}" th:text="${p.fullName}">Name</a>
+                            <small class="faint" th:text="${p.email}">email</small>
+                        </td>
+                        <td class="mono" th:text="${p.username}">user</td>
+                        <td th:text="${p.role.label}">role</td>
+                        <td>
+                            <span class="pill" th:classappend="${p.active} ? 'pill-good' : 'pill-neutral'"
+                                  th:text="${p.active} ? 'Active' : 'Disabled'">Active</span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <form th:action="@{'/admin/people/' + ${p.id} + '/active'}" method="post">
+                                    <input type="hidden" name="active" th:value="${!p.active}">
+                                    <button class="btn btn-small btn-quiet" type="submit"
+                                            th:text="${p.active} ? 'Disable' : 'Enable'">Disable</button>
+                                </form>
+                                <form th:action="@{'/admin/people/' + ${p.id} + '/password'}" method="post"
+                                      class="actions">
+                                    <input type="password" name="password" placeholder="New password" required
+                                           minlength="4">
+                                    <button class="btn btn-small btn-quiet" type="submit">Reset</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Add someone</h2>
+            <form th:action="@{/admin/people}" method="post" class="stack">
+                <div class="field">
+                    <label for="fullName">Full name</label>
+                    <input id="fullName" name="fullName" required>
+                </div>
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input id="username" name="username" required>
+                </div>
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" required>
+                </div>
+                <div class="field">
+                    <label for="designation">Designation</label>
+                    <input id="designation" name="designation" placeholder="Backend engineer" required>
+                </div>
+                <div class="field">
+                    <label for="role">Role</label>
+                    <select id="role" name="role">
+                        <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}">Role</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="password">Temporary password</label>
+                    <input id="password" name="password" type="password" required minlength="4">
+                </div>
+                <div class="actions">
+                    <button class="btn" type="submit">Create account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

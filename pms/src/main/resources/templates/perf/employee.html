@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Performance', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${employee.fullName}">Name</h1>
+            <p class="sub" th:text="${employee.designation} + ' · ' + ${employee.role.label}">role</p>
+        </div>
+    </div>
+
+    <div class="grid-4">
+        <div class="metric" th:classappend="${score.score >= 75} ? 'good' : (${score.score < 50} ? 'alert' : '')">
+            <span class="metric-label">Productivity score</span>
+            <span class="metric-value" th:text="${score.score}">0</span>
+            <span class="metric-note" th:text="${score.band}">band</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Completion rate</span>
+            <span class="metric-value" th:text="${#numbers.formatDecimal(score.completionRate, 1, 0)} + '%'">0%</span>
+            <span class="metric-note" th:text="${score.completedTasks} + ' of ' + ${score.totalTasks} + ' tasks'">0</span>
+        </div>
+        <div class="metric" th:classappend="${score.overdueTasks > 0} ? 'alert' : ''">
+            <span class="metric-label">Deadline adherence</span>
+            <span class="metric-value" th:text="${#numbers.formatDecimal(score.onTimeRate, 1, 0)} + '%'">0%</span>
+            <span class="metric-note" th:text="${score.extensionsRequested} + ' extension requests'">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Average rating</span>
+            <span class="metric-value"
+                  th:text="${score.averageRating > 0 ? #numbers.formatDecimal(score.averageRating, 1, 1) : '—'}">—</span>
+            <span class="metric-note" th:text="${score.attendanceDays} + ' days logged'">0</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>What the numbers suggest</h2>
+        <div class="insight" th:text="${insight}">insight</div>
+    </div>
+
+    <div class="card">
+        <h2>Review history</h2>
+        <div class="empty" th:if="${#lists.isEmpty(reviews)}"><p>No reviews recorded yet.</p></div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(reviews)}">
+            <table>
+                <thead>
+                <tr><th>Task</th><th>Quality</th><th>Timeliness</th><th>Punctuality</th>
+                    <th>Professionalism</th><th>Average</th><th>Reviewed by</th><th>When</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${reviews}">
+                    <td><a th:href="@{'/tasks/' + ${r.task.id}}" th:text="${r.task.title}">Task</a></td>
+                    <td class="mono" th:text="${r.quality}">3</td>
+                    <td class="mono" th:text="${r.timeliness}">3</td>
+                    <td class="mono" th:text="${r.punctuality}">3</td>
+                    <td class="mono" th:text="${r.professionalism}">3</td>
+                    <td class="mono" th:text="${#numbers.formatDecimal(r.average(), 1, 1)}">3.0</td>
+                    <td class="faint" th:text="${r.reviewer.fullName}">Lead</td>
+                    <td class="faint" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}">date</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" th:each="r : ${reviews}" th:unless="${#strings.isEmpty(r.comments)}">
+        <h2 th:text="'Comment on ' + ${r.task.title}">Comment</h2>
+        <p th:text="${r.comments}">comment</p>
+    </div>
+</main>
+</body>
+</html>

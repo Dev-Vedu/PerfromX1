@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Task', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${task.title}">Task</h1>
+            <p class="sub">
+                <a th:href="@{'/projects/' + ${task.project.id}}" th:text="${task.project.name}">Project</a>
+                <span class="faint" th:text="' · ' + (${task.assignee != null} ? ${task.assignee.fullName} : 'Unassigned')"></span>
+            </p>
+        </div>
+        <div class="actions">
+            <span class="pill"
+                  th:classappend="${task.priority.name() == 'CRITICAL'} ? 'pill-alert' : (${task.priority.name() == 'HIGH'} ? 'pill-warn' : 'pill-neutral')"
+                  th:text="${task.priority.label} + ' priority'">Priority</span>
+            <span class="pill pill-neutral" th:text="${task.status.label}">Status</span>
+            <span class="pill pill-alert" th:if="${task.overdue}">Past deadline</span>
+        </div>
+    </div>
+
+    <div class="grid grid-sidebar">
+        <div class="stack">
+
+            <div class="card">
+                <h2>Brief</h2>
+                <p th:text="${task.description}" th:if="${task.description}">Description</p>
+                <p class="faint" th:unless="${task.description}">No brief was written for this task.</p>
+
+                <div class="divider"></div>
+                <div class="risk-rail">
+                    <div class="bar" th:classappend="${task.overdue} ? 'late' : ''">
+                        <span th:style="'width:' + ${task.progress} + '%'"></span>
+                    </div>
+                    <span class="bar-label mono" th:text="${task.progress} + '% complete'">0%</span>
+                </div>
+            </div>
+
+            <!-- Progress update: owner only, while the task is open -->
+            <div class="card" th:if="${isOwner and task.status.open}">
+                <h2>Update your progress</h2>
+                <form th:action="@{'/tasks/' + ${task.id} + '/progress'}" method="post">
+                    <div class="field">
+                        <label for="progress">Percent complete</label>
+                        <input type="range" id="progress" name="progress" class="progress-range"
+                               min="0" max="100" step="5" th:value="${task.progress}">
+                        <span class="progress-out mono faint">0%</span>
+                    </div>
+                    <div class="field">
+                        <label for="note">What moved today</label>
+                        <input type="text" id="note" name="note" placeholder="Short note for the work log">
+                    </div>
+                    <button class="btn" type="submit">Save progress</button>
+                </form>
+            </div>
+
+            <!-- Submit for review -->
+            <div class="card" th:if="${isOwner and task.status.open}">
+                <h2>Submit for review</h2>
+                <p class="faint">Attach whatever the lead needs to check the work. Run the code through the
+                    <a th:href="@{'/chatbot?taskId=' + ${task.id}}">review chatbot</a> first if this is a code task.</p>
+                <form th:action="@{'/tasks/' + ${task.id} + '/submit'}" method="post" enctype="multipart/form-data">
+                    <div class="field">
+                        <label for="subnote">Submission note</label>
+                        <textarea id="subnote" name="note" placeholder="What you built, what you left out, what needs a second look"></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="file">Attachment</label>
+                        <input type="file" id="file" name="file">
+                    </div>
+                    <button class="btn" type="submit">Send for review</button>
+                </form>
+            </div>
+
+            <!-- Lead review -->
+            <div class="card" th:if="${isProjectLead and task.status.name() == 'SUBMITTED'}">
+                <h2>Review this submission</h2>
+                <div class="card-flat" th:if="${task.submissionNote}" th:text="${task.submissionNote}">note</div>
+                <p th:if="${task.attachmentPath}" style="margin-top:.6rem">
+                    Attachment:
+                    <a th:href="@{'/files/' + ${task.attachmentPath}}" th:text="${task.attachmentName}">file</a>
+                </p>
+
+                <div class="divider"></div>
+                <form th:action="@{'/tasks/' + ${task.id} + '/complete'}" method="post" style="margin-bottom:.75rem">
+                    <div class="field">
+                        <label for="okcomment">Closing comment</label>
+                        <input type="text" id="okcomment" name="comment" placeholder="Optional">
+                    </div>
+                    <button class="btn" type="submit">Mark complete</button>
+                </form>
+                <form th:action="@{'/tasks/' + ${task.id} + '/revision'}" method="post">
+                    <div class="field">
+                        <label for="revcomment">What needs changing</label>
+                        <input type="text" id="revcomment" name="comment" placeholder="Be specific so it comes back right">
+                    </div>
+                    <button class="btn btn-quiet" type="submit">Request revisions</button>
+                </form>
+            </div>
+
+            <!-- Rating -->
+            <div class="card" th:if="${isProjectLead and task.status.name() == 'COMPLETED'}">
+                <h2>Rate this work</h2>
+                <p class="faint">Scores feed the owner's productivity score and the increment guidance HR sees.</p>
+                <form th:action="@{'/tasks/' + ${task.id} + '/rate'}" method="post">
+                    <div class="rating-grid">
+                        <div class="field">
+                            <label for="quality">Quality <output id="out-q"></output></label>
+                            <input type="range" id="quality" name="quality" min="1" max="5" value="3"
+                                   data-output="out-q">
+                        </div>
+                        <div class="field">
+                            <label for="timeliness">Timeliness <output id="out-t"></output></label>
+                            <input type="range" id="timeliness" name="timeliness" min="1" max="5" value="3"
+                                   data-output="out-t">
+                        </div>
+                        <div class="field">
+                            <label for="punctuality">Punctuality <output id="out-p"></output></label>
+                            <input type="range" id="punctuality" name="punctuality" min="1" max="5" value="3"
+                                   data-output="out-p">
+                        </div>
+                        <div class="field">
+                            <label for="professionalism">Professionalism <output id="out-r"></output></label>
+                            <input type="range" id="professionalism" name="professionalism" min="1" max="5" value="3"
+                                   data-output="out-r">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="comments">Comments for the record</label>
+                        <textarea id="comments" name="comments"></textarea>
+                    </div>
+                    <button class="btn" type="submit">Save rating</button>
+                </form>
+            </div>
+
+            <!-- Work log -->
+            <div class="card">
+                <h2>Work log</h2>
+                <p class="faint" th:if="${#lists.isEmpty(logs)}">No updates recorded yet.</p>
+                <ul class="timeline">
+                    <li th:each="l : ${logs}">
+                        <span class="mono" th:text="${l.progressBefore} + '% → ' + ${l.progressAfter} + '%'">0% → 0%</span>
+                        <span th:if="${l.note}" th:text="' · ' + ${l.note}"></span>
+                        <time class="faint" style="display:block"
+                              th:text="${l.employee.fullName} + ' · ' + ${#temporals.format(l.loggedAt, 'd MMM, HH:mm')}">when</time>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Code reviews on this task -->
+            <div class="card" th:if="${!#lists.isEmpty(codeReviews)}">
+                <h2>Chatbot code reviews</h2>
+                <ul class="note-feed">
+                    <li th:each="c : ${codeReviews}">
+                        <span class="pill"
+                              th:classappend="${c.verdict == 'OPTIMIZED'} ? 'pill-good' : (${c.verdict == 'NEEDS_WORK'} ? 'pill-warn' : 'pill-neutral')"
+                              th:text="${c.verdict}">verdict</span>
+                        <span class="mono faint" th:text="' score ' + ${c.score}"></span>
+                        <time class="faint" style="display:block"
+                              th:text="${#temporals.format(c.createdAt, 'd MMM, HH:mm')}">when</time>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="stack">
+            <div class="card">
+                <h3>Dates</h3>
+                <p class="faint" style="margin:0">Started <time th:text="${task.startDate}">date</time></p>
+                <p class="faint" style="margin:0">Due <time th:text="${task.deadline}">date</time></p>
+                <p class="faint" style="margin:0" th:if="${task.originalDeadline != null and task.extensionCount > 0}"
+                   th:text="'Originally ' + ${task.originalDeadline} + ' · ' + ${task.extensionCount} + ' extension(s)'">orig</p>
+                <p class="faint" style="margin:0" th:if="${task.completedAt}"
+                   th:text="'Completed ' + ${#temporals.format(task.completedAt, 'd MMM yyyy')}">done</p>
+            </div>
+
+            <div class="card" th:if="${task.reviewComment}">
+                <h3>Lead's note</h3>
+                <p style="margin:0" th:text="${task.reviewComment}">comment</p>
+            </div>
+
+            <!-- Extension request -->
+            <div class="card" th:if="${isOwner and task.status.open}">
+                <h3>Need more time?</h3>
+                <p class="faint">Your lead sees the reason and answers in writing.</p>
+                <form th:action="@{'/tasks/' + ${task.id} + '/extension'}" method="post">
+                    <div class="field">
+                        <label for="requestedDeadline">New deadline</label>
+                        <input type="date" id="requestedDeadline" name="requestedDeadline" required>
+                    </div>
+                    <div class="field">
+                        <label for="reason">Why</label>
+                        <textarea id="reason" name="reason" required
+                                  placeholder="What blocked you and what changes if the date moves"></textarea>
+                    </div>
+                    <button class="btn btn-quiet" type="submit">Request extension</button>
+                </form>
+            </div>
+
+            <div class="card" th:if="${!#lists.isEmpty(extensions)}">
+                <h3>Extension history</h3>
+                <ul class="note-feed">
+                    <li th:each="e : ${extensions}">
+                        <span class="pill"
+                              th:classappend="${e.status.name() == 'APPROVED'} ? 'pill-good' : (${e.status.name() == 'REJECTED'} ? 'pill-alert' : 'pill-warn')"
+                              th:text="${e.status.label}">status</span>
+                        <span class="faint" th:text="' → ' + ${e.requestedDeadline}"></span>
+                        <span style="display:block" th:text="${e.reason}">reason</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

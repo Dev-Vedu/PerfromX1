@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Dashboard', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Where everything stands</h1>
+            <p class="sub" th:text="'Signed in as ' + ${me.fullName} + ', project lead'">Lead</p>
+        </div>
+        <div class="actions">
+            <a class="btn btn-quiet" th:href="@{/projects/new}">New project</a>
+            <a class="btn" th:href="@{/tasks/new}">Assign a task</a>
+        </div>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:1.25rem">
+        <div class="metric">
+            <span class="metric-label">Projects you lead</span>
+            <span class="metric-value" th:text="${#lists.size(health)}">0</span>
+        </div>
+        <div class="metric" th:classappend="${#lists.size(reviewQueue) > 0} ? 'good' : ''">
+            <span class="metric-label">Waiting for your review</span>
+            <span class="metric-value" th:text="${#lists.size(reviewQueue)}">0</span>
+            <span class="metric-note">Submitted tasks</span>
+        </div>
+        <div class="metric" th:classappend="${#lists.size(pendingExtensions) > 0} ? 'alert' : ''">
+            <span class="metric-label">Extension requests</span>
+            <span class="metric-value" th:text="${#lists.size(pendingExtensions)}">0</span>
+            <span class="metric-note">Awaiting a decision</span>
+        </div>
+        <div class="metric" th:classappend="${riskiest != null and riskiest.riskScore >= 60} ? 'alert' : ''">
+            <span class="metric-label">Highest risk project</span>
+            <span class="metric-value" th:text="${riskiest != null} ? ${riskiest.riskScore} : '—'">0</span>
+            <span class="metric-note" th:text="${riskiest != null} ? ${riskiest.project.name} : 'No projects yet'">—</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Project health</h2>
+        <div class="empty" th:if="${#lists.isEmpty(health)}">
+            <p>You are not leading any projects yet.</p>
+            <a class="btn" th:href="@{/projects/new}">Create your first project</a>
+        </div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(health)}">
+            <table>
+                <thead>
+                <tr>
+                    <th>Project</th><th>Progress</th><th class="num">Tasks</th>
+                    <th class="num">Overdue</th><th>Risk</th><th>What to look at</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="h : ${health}">
+                    <td><a th:href="@{'/projects/' + ${h.project.id}}" th:text="${h.project.name}">Project</a></td>
+                    <td>
+                        <div class="risk-rail">
+                            <div class="bar" th:classappend="${h.overdueTasks > 0} ? 'late' : ''">
+                                <span th:style="'width:' + ${h.progressPercent} + '%'"></span>
+                            </div>
+                            <span class="bar-label mono" th:text="${h.progressPercent} + '%'">0%</span>
+                        </div>
+                    </td>
+                    <td class="num mono" th:text="${h.completedTasks} + '/' + ${h.totalTasks}">0/0</td>
+                    <td class="num mono" th:text="${h.overdueTasks}">0</td>
+                    <td>
+                        <span class="pill"
+                              th:classappend="${h.riskLevel == 'High'} ? 'pill-alert' : (${h.riskLevel == 'Watch'} ? 'pill-warn' : 'pill-good')"
+                              th:text="${h.riskLevel}">Low</span>
+                    </td>
+                    <td class="faint" th:text="${h.headline}">Note</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:1rem">
+        <div class="card">
+            <h2>Submitted, waiting on you</h2>
+            <p class="faint" th:if="${#lists.isEmpty(reviewQueue)}">Nothing in the queue.</p>
+            <ul class="note-feed" th:unless="${#lists.isEmpty(reviewQueue)}">
+                <li th:each="t : ${reviewQueue}">
+                    <a th:href="@{'/tasks/' + ${t.id}}" th:text="${t.title}">Task</a>
+                    <span class="faint" th:text="' · ' + ${t.assignee?.fullName}"></span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Deadline extension requests</h2>
+            <p class="faint" th:if="${#lists.isEmpty(pendingExtensions)}">No open requests.</p>
+            <ul class="note-feed" th:unless="${#lists.isEmpty(pendingExtensions)}">
+                <li th:each="r : ${pendingExtensions}">
+                    <a th:href="@{/extensions}" th:text="${r.task.title}">Task</a>
+                    <span class="faint"
+                          th:text="' · ' + ${r.requestedBy.fullName} + ' wants ' + ${r.requestedDeadline}"></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</main>
+</body>
+</html>

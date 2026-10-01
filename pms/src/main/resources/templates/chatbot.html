@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Code review chatbot', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Code review chatbot</h1>
+            <p class="sub">Paste your code before you submit a task. You get a first-pass opinion on whether it is
+                optimized, and what to change, without waiting on your lead.</p>
+        </div>
+    </div>
+
+    <div th:if="${result != null}" class="verdict-banner"
+         th:classappend="'verdict-' + ${result.verdict}">
+        <div>
+            <strong th:text="${result.verdict == 'OPTIMIZED' ? 'This code looks optimized' :
+                              (result.verdict == 'NEEDS_WORK' ? 'This code can be improved' : 'Verdict unclear')}">Verdict</strong>
+            <p class="faint" style="margin:.25rem 0 0" th:text="${result.language}">language</p>
+        </div>
+        <span class="mono" th:text="${result.score} + ' / 100'">0 / 100</span>
+    </div>
+
+    <div class="grid-sidebar">
+        <div class="card">
+            <h2>Submit code</h2>
+            <form th:action="@{/chatbot/review}" method="post" class="stack">
+                <div class="field-row">
+                    <div class="field">
+                        <label for="taskId">Attach to task</label>
+                        <select id="taskId" name="taskId">
+                            <option value="">Not tied to a task</option>
+                            <option th:each="t : ${myTasks}" th:value="${t.id}" th:text="${t.title}"
+                                    th:selected="${taskId != null and taskId == t.id}">Task</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="language">Language</label>
+                        <input id="language" name="language" placeholder="Java, SQL, JavaScript…" value="Java">
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="code">Code</label>
+                    <textarea id="code" name="code" rows="16" class="mono" required
+                              placeholder="Paste the method, query or component you want checked."
+                              th:text="${submittedCode}"></textarea>
+                </div>
+                <div class="actions">
+                    <button class="btn" type="submit">Review this code</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="stack">
+            <div class="card" th:if="${result != null}">
+                <h2>Findings</h2>
+                <div class="insight" style="white-space:pre-wrap" th:text="${result.findings}">findings</div>
+            </div>
+
+            <div class="card">
+                <h2>Recent reviews</h2>
+                <div class="empty" th:if="${#lists.isEmpty(history)}">
+                    <p>Nothing reviewed yet.</p>
+                </div>
+                <ul class="note-feed" th:unless="${#lists.isEmpty(history)}">
+                    <li th:each="h : ${history}">
+                        <div>
+                            <span class="pill"
+                                  th:classappend="${h.verdict == 'OPTIMIZED'} ? 'pill-good' : 'pill-warn'"
+                                  th:text="${h.verdict}">verdict</span>
+                            <span class="mono faint" th:text="${h.score} + '/100'">0/100</span>
+                        </div>
+                        <small class="faint" th:text="${h.task != null ? h.task.title : 'Ad-hoc snippet'}">task</small>
+                        <small class="faint" th:text="${#temporals.format(h.createdAt, 'dd MMM, HH:mm')}">when</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

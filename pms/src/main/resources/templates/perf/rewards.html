@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Increments and bonuses', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Increments and bonuses</h1>
+            <p class="sub">Suggestions generated from performance data. HR makes the final decision — nothing here is
+                applied automatically.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="empty" th:if="${#lists.isEmpty(rewards)}"><p>No employees on record.</p></div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(rewards)}">
+            <table>
+                <thead>
+                <tr><th>Employee</th><th>Score</th><th>Suggested increment</th><th>Bonus band</th><th>Why</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${rewards}">
+                    <td>
+                        <a th:href="@{'/performance/' + ${r.employee.id}}" th:text="${r.employee.fullName}">Name</a>
+                        <small class="faint" th:text="${r.employee.designation}">designation</small>
+                    </td>
+                    <td class="mono" th:text="${r.score.score}">0</td>
+                    <td><strong th:text="${r.recommendation}">—</strong></td>
+                    <td th:text="${r.bonusBand}">—</td>
+                    <td class="faint" th:text="${r.rationale}">reason</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

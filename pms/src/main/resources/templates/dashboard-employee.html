@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Dashboard', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="'Good to see you, ' + ${#strings.arraySplit(me.fullName, ' ')[0]}">Hello</h1>
+            <p class="sub">Your open work, ordered by the deadline that lands first.</p>
+        </div>
+        <a class="btn btn-quiet" th:href="@{/chatbot}">Check code before submitting</a>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:1.25rem">
+        <div class="metric">
+            <span class="metric-label">Open tasks</span>
+            <span class="metric-value" th:text="${#lists.size(openTasks)}">0</span>
+        </div>
+        <div class="metric" th:classappend="${#lists.size(overdue) > 0} ? 'alert' : ''">
+            <span class="metric-label">Past deadline</span>
+            <span class="metric-value" th:text="${#lists.size(overdue)}">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Due within 3 days</span>
+            <span class="metric-value" th:text="${#lists.size(dueSoon)}">0</span>
+        </div>
+        <div class="metric good">
+            <span class="metric-label">Productivity score</span>
+            <span class="metric-value" th:text="${score.score}">0</span>
+            <span class="metric-note" th:text="${score.band}">—</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Your tasks</h2>
+        <div class="empty" th:if="${#lists.isEmpty(tasks)}">
+            <p>Nothing assigned to you right now.</p>
+        </div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(tasks)}">
+            <table>
+                <thead>
+                <tr><th>Task</th><th>Project</th><th>Priority</th><th>Deadline</th><th>Progress</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${tasks}">
+                    <td><a th:href="@{'/tasks/' + ${t.id}}" th:text="${t.title}">Task</a></td>
+                    <td class="faint" th:text="${t.project.name}">Project</td>
+                    <td>
+                        <span class="pill"
+                              th:classappend="${t.priority.name() == 'CRITICAL'} ? 'pill-alert' : (${t.priority.name() == 'HIGH'} ? 'pill-warn' : 'pill-neutral')"
+                              th:text="${t.priority.label}">Medium</span>
+                    </td>
+                    <td>
+                        <time th:text="${t.deadline}">date</time>
+                        <span class="pill pill-alert" th:if="${t.overdue}">overdue</span>
+                    </td>
+                    <td>
+                        <div class="risk-rail">
+                            <div class="bar" th:classappend="${t.overdue} ? 'late' : ''">
+                                <span th:style="'width:' + ${t.progress} + '%'"></span>
+                            </div>
+                            <span class="bar-label mono" th:text="${t.progress} + '%'">0%</span>
+                        </div>
+                    </td>
+                    <td class="faint" th:text="${t.status.label}">Status</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Projects you are on</h2>
+        <p class="faint" th:if="${#lists.isEmpty(projects)}">You have not been added to a project yet.</p>
+        <ul class="note-feed">
+            <li th:each="p : ${projects}">
+                <a th:href="@{'/projects/' + ${p.id}}" th:text="${p.name}">Project</a>
+                <span class="faint" th:text="' · led by ' + ${p.lead.fullName}"></span>
+            </li>
+        </ul>
+    </div>
+</main>
+</body>
+</html>

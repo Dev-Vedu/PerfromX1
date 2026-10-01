@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Review queue', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Review queue</h1>
+            <p class="sub">Work your team has submitted. Mark it complete or send it back with notes.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="empty" th:if="${#lists.isEmpty(tasks)}">
+            <p>Nothing waiting on you.</p>
+        </div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(tasks)}">
+            <table>
+                <thead><tr><th>Task</th><th>Owner</th><th>Project</th><th>Submitted</th><th>Deadline</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="t : ${tasks}">
+                    <td><a th:href="@{'/tasks/' + ${t.id}}" th:text="${t.title}">Task</a></td>
+                    <td class="faint" th:text="${t.assignee?.fullName}">Owner</td>
+                    <td class="faint" th:text="${t.project.name}">Project</td>
+                    <td><time th:text="${t.submittedAt != null} ? ${#temporals.format(t.submittedAt, 'd MMM, HH:mm')} : '—'">date</time></td>
+                    <td><time th:text="${t.deadline}">date</time>
+                        <span class="pill pill-alert" th:if="${t.overdue}">late</span></td>
+                    <td><a class="btn btn-small" th:href="@{'/tasks/' + ${t.id}}">Open</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

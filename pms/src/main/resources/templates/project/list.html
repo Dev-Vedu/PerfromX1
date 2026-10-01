@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: page('Projects', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Projects</h1>
+            <p class="sub">Progress is the average completion across every task in the project.</p>
+        </div>
+        <a class="btn" th:href="@{/projects/new}" sec:authorize="hasRole('LEAD')">New project</a>
+    </div>
+
+    <div class="empty" th:if="${#lists.isEmpty(health)}">
+        <p>No projects yet.</p>
+        <a class="btn" th:href="@{/projects/new}" sec:authorize="hasRole('LEAD')">Create a project</a>
+    </div>
+
+    <div class="grid grid-2" th:unless="${#lists.isEmpty(health)}">
+        <div class="card" th:each="h : ${health}">
+            <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
+                <h2 style="margin-bottom:.2rem">
+                    <a th:href="@{'/projects/' + ${h.project.id}}" th:text="${h.project.name}">Project</a>
+                </h2>
+                <span class="pill"
+                      th:classappend="${h.riskLevel == 'High'} ? 'pill-alert' : (${h.riskLevel == 'Watch'} ? 'pill-warn' : 'pill-good')"
+                      th:text="${h.riskLevel} + ' risk'">Low risk</span>
+            </div>
+            <p class="faint" th:text="${h.project.description}">Description</p>
+
+            <div class="risk-rail" style="margin:.75rem 0">
+                <div class="bar" th:classappend="${h.overdueTasks > 0} ? 'late' : ''">
+                    <span th:style="'width:' + ${h.progressPercent} + '%'"></span>
+                </div>
+                <span class="bar-label mono" th:text="${h.progressPercent} + '%'">0%</span>
+            </div>
+
+            <p class="faint" style="margin:0"
+               th:text="${h.completedTasks} + ' of ' + ${h.totalTasks} + ' tasks done · lead ' + ${h.project.lead.fullName}">meta</p>
+            <p class="faint" style="margin:.25rem 0 0" th:text="${h.headline}">headline</p>
+        </div>
+    </div>
+</main>
+</body>
+</html>

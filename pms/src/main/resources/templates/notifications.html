@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: page('Notifications', ~{::main})}">
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Notifications</h1>
+            <p class="sub">New tasks, approaching deadlines, approvals and risk alerts.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="empty" th:if="${#lists.isEmpty(allNotifications)}">
+            <p>Nothing here yet. Reminders arrive as deadlines get close.</p>
+        </div>
+        <ul class="note-feed">
+            <li th:each="n : ${allNotifications}" th:classappend="${!n.seen} ? 'unseen' : ''">
+                <span class="pill pill-neutral" th:text="${n.category}">TASK</span>
+                <a th:if="${n.link}" th:href="@{${n.link}}" th:text="${n.message}">Message</a>
+                <span th:unless="${n.link}" th:text="${n.message}">Message</span>
+                <time class="faint" style="display:block"
+                      th:text="${#temporals.format(n.createdAt, 'd MMM, HH:mm')}">date</time>
+            </li>
+        </ul>
+    </div>
+</main>
+</body>
+</html>
